@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>MYK Chat</title>
+  <meta name="theme-color" content="#0e1621" />
+  <link rel="icon" href="favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --ink: #0e1621; --panel: #17212b; --raised: #242f3d; --hover: #202b36;
+      --fg: #f5f5f5; --muted: #8b9aab; --accent: #2aabee; --accent-h: #229ed9;
+      --out: #2b5278; --in: #182533; --danger: #e53935;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; font-family: Vazirmatn, system-ui, sans-serif; background: var(--ink); color: var(--fg); }
+    button { font-family: inherit; cursor: pointer; border: 0; background: none; color: inherit; }
+    input, textarea { font-family: inherit; }
+    #app { height: 100dvh; }
+    .auth { min-height: 100dvh; display: flex; align-items: center; justify-content: center; padding: 16px; }
+    .card { width: 100%; max-width: 400px; background: var(--panel); border-radius: 20px; padding: 36px 32px; }
+    .logo { width: 64px; height: 64px; border-radius: 18px; background: var(--accent); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; font-weight: 700; }
+    h1 { text-align: center; font-size: 26px; }
+    .sub { text-align: center; color: var(--muted); font-size: 13px; margin: 6px 0 24px; }
+    label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 14px; }
+    input, textarea { width: 100%; background: var(--raised); border: 0; border-radius: 12px; padding: 12px 14px; color: var(--fg); outline: none; font-size: 14px; margin-top: 6px; }
+    input:focus { box-shadow: 0 0 0 2px var(--accent); }
+    .btn { width: 100%; height: 44px; border-radius: 12px; background: var(--accent); color: #fff; font-weight: 600; font-size: 15px; }
+    .btn:hover { background: var(--accent-h); }
+    .switch { text-align: center; margin-top: 18px; font-size: 13px; color: var(--muted); }
+    .switch a { color: var(--accent); font-weight: 500; cursor: pointer; }
+    .err { background: rgba(229,57,53,.15); color: #ef5350; padding: 10px 12px; border-radius: 10px; font-size: 13px; margin-bottom: 12px; }
+    .hint { text-align: center; font-size: 11px; color: var(--muted); margin-top: 20px; }
+    .shell { display: flex; height: 100dvh; overflow: hidden; }
+    .side { width: 380px; max-width: 100%; background: var(--panel); display: flex; flex-direction: column; border-left: 1px solid var(--ink); }
+    .side-h { display: flex; align-items: center; gap: 8px; padding: 10px 12px; }
+    .icon { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--muted); }
+    .icon:hover { background: var(--hover); }
+    .search { flex: 1; height: 40px; background: var(--raised); border-radius: 20px; display: flex; align-items: center; padding: 0 12px; gap: 8px; }
+    .search input { background: none; padding: 0; margin: 0; border-radius: 0; }
+    .search input:focus { box-shadow: none; }
+    .stories { display: flex; gap: 12px; padding: 12px; overflow-x: auto; border-bottom: 1px solid var(--ink); }
+    .story { min-width: 56px; text-align: center; font-size: 11px; color: var(--muted); }
+    .story i { display: flex; width: 56px; height: 56px; border-radius: 50%; background: var(--raised); align-items: center; justify-content: center; margin: 0 auto 4px; box-shadow: 0 0 0 2px var(--accent); font-style: normal; font-weight: 600; color: var(--fg); }
+    .list { flex: 1; overflow-y: auto; }
+    .item { display: flex; gap: 12px; padding: 10px 16px; width: 100%; text-align: right; align-items: center; }
+    .item:hover, .item.on { background: var(--hover); }
+    .av { width: 52px; height: 52px; border-radius: 50%; background: var(--raised); display: flex; align-items: center; justify-content: center; font-weight: 600; flex-shrink: 0; }
+    .av.ch { border-radius: 16px; background: var(--accent); }
+    .item .t { font-weight: 600; font-size: 15px; display: flex; align-items: center; gap: 4px; }
+    .item .p { font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px; }
+    .item .tm { font-size: 11px; color: var(--muted); margin-right: auto; }
+    .tick { color: var(--accent); font-size: 13px; }
+    .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+    .empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--muted); }
+    .hd { min-height: 60px; display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: var(--panel); border-bottom: 1px solid var(--ink); }
+    .msgs { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 4px; }
+    .sys { align-self: center; background: rgba(42,171,238,.12); color: var(--accent); font-size: 13px; padding: 6px 16px; border-radius: 20px; }
+    .bub { max-width: 72%; padding: 8px 12px; border-radius: 12px; font-size: 15px; line-height: 1.45; }
+    .mine { align-self: flex-start; background: var(--out); border-bottom-right-radius: 4px; }
+    .theirs { align-self: flex-end; background: var(--in); border-bottom-left-radius: 4px; }
+    .who { color: var(--accent); font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+    .meta { font-size: 11px; color: rgba(255,255,255,.5); text-align: left; margin-top: 2px; }
+    .composer { display: flex; align-items: flex-end; gap: 6px; padding: 10px 12px; background: var(--panel); }
+    .composer textarea { flex: 1; max-height: 120px; resize: none; border-radius: 22px; padding: 10px 16px; }
+    .send { width: 44px; height: 44px; border-radius: 50%; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+    .ov { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 40; }
+    .drawer { position: fixed; top: 0; right: 0; width: min(320px, 92vw); height: 100%; background: var(--panel); z-index: 50; display: flex; flex-direction: column; }
+    .dhead { background: var(--accent); padding: 22px 20px; }
+    .prem { margin: 12px 16px; padding: 12px; border: 1px solid rgba(42,171,238,.3); background: rgba(42,171,238,.1); border-radius: 12px; text-align: center; font-size: 13px; }
+    .ditem { display: flex; gap: 12px; padding: 14px 20px; font-size: 14px; width: 100%; text-align: right; }
+    .ditem:hover { background: var(--hover); }
+    .toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%); background: var(--raised); padding: 10px 20px; border-radius: 12px; z-index: 80; font-size: 13px; }
+    .danger { color: var(--danger); }
+    @media (max-width: 768px) {
+      .side.hidden-m { display: none; }
+      .main.hidden-m { display: none; }
+      .side { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  <script>
+  const KEY = "mykchat.v1";
+  const PREMIUM_EMAIL = "myk@mykchat.com";
+  const PREMIUM_PASSWORD = "1390";
+  const CHANNEL_ID = "n";
+
+  function hashPassword(password) {
+    const str = "myk-v1:" + password;
+    let h = 2166136261;
+    for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+    return (h >>> 0).toString(16);
+  }
+  function uid(p) { return p + "_" + Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4); }
+  function now() { return new Date().toISOString(); }
+  function seed() {
+    const owner = { id: "u_myk", email: PREMIUM_EMAIL, passwordHash: hashPassword(PREMIUM_PASSWORD), displayName: "MYK", username: "myk", bio: "مالک MYK Chat", isPremium: true, isVerified: true, isAdmin: true, createdAt: now() };
+    return {
+      users: [owner],
+      chats: [{ id: CHANNEL_ID, type: "channel", title: "ن", username: "n_channel", description: "کانال رسمی", isOfficial: true, createdAt: now() }],
+      members: [{ chatId: CHANNEL_ID, userId: owner.id, role: "owner", canLeave: false }],
+      messages: [{ id: "m_welcome", chatId: CHANNEL_ID, senderId: null, content: "به کانال رسمی «ن» خوش آمدید. خروج ممکن نیست.", type: "system", createdAt: now() }]
+    };
+  }
+  function load() {
+    try {
+      const raw = localStorage.getItem(KEY);
+      if (!raw) { const db = seed(); save(db); return db; }
+      const db = JSON.parse(raw);
+      if (!db.users || !db.users.length) return seed();
+      return db;
+    } catch { return seed(); }
+  }
+  function save(db) { localStorage.setItem(KEY, JSON.stringify(db)); }
+  function sess() { return localStorage.getItem(KEY + ".session"); }
+  function setSess(id) { if (id) localStorage.setItem(KEY + ".session", id); else localStorage.removeItem(KEY + ".session"); }
+  function ft(iso) { try { return new Date(iso).toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" }); } catch { return ""; } }
+  function esc(t) { const d = document.createElement("div"); d.textContent = t || ""; return d.innerHTML; }
+  function ini(n) { return ((n || "م").trim()[0] || "م").toUpperCase(); }
+
+  const app = document.getElementById("app");
+  let me = null, active = "n", panel = false, q = "", toast = "", mode = "login";
+
+  function userById(id) { return load().users.find(u => u.id === id); }
+
+  function boot() {
+    const id = sess();
+    if (id) {
+      me = userById(id);
+      if (me) {
+        const db = load();
+        if (!db.members.some(m => m.chatId === CHANNEL_ID && m.userId === me.id)) {
+          db.members.push({ chatId: CHANNEL_ID, userId: me.id, role: "member", canLeave: false });
+          save(db);
+        }
+      }
+    }
+    render();
+  }
+
+  function chatsFor() {
+    const db = load();
+    return db.members.filter(m => m.userId === me.id).map(m => {
+      const c = db.chats.find(x => x.id === m.chatId); if (!c) return null;
+      const msgs = db.messages.filter(x => x.chatId === c.id);
+      return Object.assign({}, c, { last: msgs[msgs.length - 1], canLeave: m.canLeave });
+    }).filter(Boolean).sort((a,b) => (b.last?.createdAt || "").localeCompare(a.last?.createdAt || ""));
+  }
+  function ptitle(c) {
+    if (c.type !== "private") return c.title;
+    const db = load();
+    if (c.peerId) { const o = db.users.find(u => u.id === c.peerId); if (o) return o.displayName; }
+    return c.title;
+  }
+
+  function showToast(t) { toast = t; render(); setTimeout(() => { toast = ""; render(); }, 2200); }
+
+  function doAuth() {
+    const email = document.getElementById("email").value.trim().toLowerCase();
+    const password = document.getElementById("pass").value;
+    const name = (document.getElementById("name") || {}).value || "";
+    const db = load();
+    try {
+      if (mode === "login") {
+        const u = db.users.find(x => x.email === email);
+        if (!u || u.passwordHash !== hashPassword(password)) throw new Error("ایمیل یا رمز عبور نادرست است");
+        me = u;
+      } else {
+        if (db.users.some(x => x.email === email)) throw new Error("این ایمیل قبلاً ثبت شده است");
+        if (password.length < 4) throw new Error("رمز عبور حداقل ۴ کاراکتر باشد");
+        const prem = email === PREMIUM_EMAIL;
+        me = { id: uid("u"), email, passwordHash: hashPassword(password), displayName: (name.trim() || email.split("@")[0]), username: email.split("@")[0] + Math.floor(Math.random()*900+100), bio: "", isPremium: prem, isVerified: prem, isAdmin: prem, createdAt: now() };
+        db.users.push(me);
+        db.members.push({ chatId: CHANNEL_ID, userId: me.id, role: "member", canLeave: false });
+        db.messages.push({ id: uid("m"), chatId: CHANNEL_ID, senderId: null, content: me.displayName + " به کانال پیوست", type: "system", createdAt: now() });
+        save(db);
+      }
+      setSess(me.id);
+      active = "n";
+      render();
+    } catch (e) { document.getElementById("err").style.display = "block"; document.getElementById("err").textContent = e.message; }
+  }
+
+  function send() {
+    const ta = document.getElementById("msg");
+    const v = (ta.value || "").trim();
+    if (!v || !active) return;
+    const db = load();
+    if (!db.members.some(m => m.chatId === active && m.userId === me.id)) return showToast("عضویت ندارید");
+    db.messages.push({ id: uid("m"), chatId: active, senderId: me.id, content: v, type: "text", createdAt: now() });
+    save(db);
+    render();
+    const box = document.getElementById("msgs");
+    if (box) box.scrollTop = box.scrollHeight;
+  }
+
+  function openPrivate(otherId) {
+    const db = load();
+    let c = db.chats.find(ch => ch.type === "private" && db.members.some(m => m.chatId === ch.id && m.userId === me.id) && db.members.some(m => m.chatId === ch.id && m.userId === otherId));
+    if (!c) {
+      const other = db.users.find(u => u.id === otherId);
+      c = { id: uid("c"), type: "private", title: other.displayName, peerId: otherId, createdAt: now() };
+      db.chats.push(c);
+      db.members.push({ chatId: c.id, userId: me.id, role: "member", canLeave: true }, { chatId: c.id, userId: otherId, role: "member", canLeave: true });
+      save(db);
+    }
+    active = c.id; q = ""; render();
+  }
+
+  function tryLeave() {
+    const db = load();
+    const mem = db.members.find(m => m.chatId === active && m.userId === me.id);
+    if (!mem) return;
+    if (!mem.canLeave) return showToast("خروج از این کانال ممکن نیست");
+    db.members = db.members.filter(m => !(m.chatId === active && m.userId === me.id));
+    save(db); active = null; render();
+  }
+
+  function render() {
+    if (!me) {
+      app.innerHTML = `<div class="auth"><div class="card">
+        <div class="logo">MYK</div><h1>MYK Chat</h1><p class="sub">پیام‌رسان وب</p>
+        <div class="err" id="err" style="display:none"></div>
+        ${mode === "register" ? `<label>نام نمایشی<input id="name" placeholder="نام شما"></label>` : ""}
+        <label>ایمیل<input id="email" type="email" dir="ltr" placeholder="email@example.com"></label>
+        <label>رمز عبور<input id="pass" type="password" placeholder="••••••••"></label>
+        <button class="btn" id="go">${mode === "login" ? "ورود" : "ثبت‌نام"}</button>
+        <p class="switch">${mode === "login" ? 'حساب ندارید؟ <a id="sw">ثبت‌نام</a>' : 'حساب دارید؟ <a id="sw">ورود</a>'}</p>
+        <p class="hint">اکانت پریمیوم: ${PREMIUM_EMAIL} / ${PREMIUM_PASSWORD}</p>
+      </div></div>`;
+      document.getElementById("go").onclick = doAuth;
+      document.getElementById("sw").onclick = () => { mode = mode === "login" ? "register" : "login"; render(); };
+      document.getElementById("pass").onkeydown = e => { if (e.key === "Enter") doAuth(); };
+      return;
+    }
+    const chats = chatsFor();
+    const db = load();
+    const chat = chats.find(c => c.id === active);
+    const msgs = active ? db.messages.filter(m => m.chatId === active) : [];
+    const results = q.trim() ? db.users.filter(u => u.id !== me.id && (u.displayName + u.username + u.email).toLowerCase().includes(q.trim().toLowerCase())) : [];
+    const mobileChat = window.innerWidth <= 768 && active;
+    app.innerHTML = `<div class="shell">
+      <aside class="side ${mobileChat ? "hidden-m" : ""}">
+        <div class="side-h">
+          <button class="icon" id="menu">☰</button>
+          <div class="search"><span style="color:var(--muted)">⌕</span><input id="q" placeholder="جستجو" value="${esc(q)}"></div>
+        </div>
+        <div class="stories">
+          <div class="story"><i>+</i>استوری من</div>
+          <div class="story"><i>ن</i>ن</div>
+          <div class="story"><i>M</i>MYK</div>
+        </div>
+        <div class="list">
+          ${results.map(u => `<button class="item" data-uid="${u.id}"><div class="av">${esc(ini(u.displayName))}</div><div><div class="t">${esc(u.displayName)} ${u.isVerified ? '<span class="tick">✓</span>' : ""}</div><div class="p">@${esc(u.username)}</div></div></button>`).join("")}
+          ${chats.map(c => {
+            const t = ptitle(c);
+            return `<button class="item ${c.id===active?"on":""}" data-cid="${c.id}"><div class="av ${c.type==="channel"?"ch":""}">${esc(ini(t))}</div><div style="flex:1;min-width:0"><div style="display:flex;gap:8px"><div class="t">${esc(t)} ${c.isOfficial?'<span class="tick">✓</span>':""}</div><div class="tm">${c.last?ft(c.last.createdAt):""}</div></div><div class="p">${esc(c.last?c.last.content:"")}</div></div></button>`;
+          }).join("")}
+        </div>
+      </aside>
+      <section class="main ${!active && window.innerWidth<=768 ? "hidden-m" : ""}">
+        ${!chat ? `<div class="empty"><strong style="color:var(--fg);font-size:18px">MYK Chat</strong><p style="margin-top:6px">یک گفتگو را انتخاب کنید</p></div>` : `
+          <div class="hd">
+            <button class="icon" id="back" style="display:${window.innerWidth<=768?"flex":"none"}">→</button>
+            <div class="av ${chat.type==="channel"?"ch":""}" style="width:42px;height:42px">${esc(ini(ptitle(chat)))}</div>
+            <div style="flex:1;min-width:0"><div class="t">${esc(ptitle(chat))} ${chat.isOfficial?'<span class="tick">✓</span>':""}</div><div style="font-size:12px;color:var(--muted)">${chat.type==="channel" && !chat.canLeave ? "عضو اجباری · امکان خروج نیست" : chat.type==="channel" ? "کانال" : "آنلاین"}</div></div>
+            <button class="icon" id="more">⋮</button>
+          </div>
+          <div class="msgs" id="msgs">${msgs.map(m => {
+            if (m.type==="system" || !m.senderId) return `<div class="sys">${esc(m.content)}</div>`;
+            const mine = m.senderId === me.id;
+            const s = userById(m.senderId);
+            return `<div class="bub ${mine?"mine":"theirs"}">${!mine && s ? `<div class="who">${esc(s.displayName)} ${s.isVerified?"✓":""}</div>` : ""}<div>${esc(m.content)}</div><div class="meta">${ft(m.createdAt)} ${mine?"✓✓":""}</div></div>`;
+          }).join("")}</div>
+          <div class="composer">
+            <button class="icon" id="att">📎</button>
+            <textarea id="msg" rows="1" placeholder="پیام بنویسید…"></textarea>
+            <button class="send" id="send">➤</button>
+          </div>`}
+      </section>
+    </div>
+    ${panel ? `<div class="ov" id="ov"></div><div class="drawer">
+      <div class="dhead"><div class="av" style="width:72px;height:72px;margin-bottom:10px;background:rgba(255,255,255,.2)">${esc(ini(me.displayName))}</div>
+      <div style="font-size:18px;font-weight:700">${esc(me.displayName)} ${me.isVerified?"✓":""} ${me.isPremium?"★":""}</div>
+      <div style="font-size:12px;opacity:.85;direction:ltr">${esc(me.email)}</div></div>
+      ${me.isPremium ? `<div class="prem"><b>نسخه پریمیوم فعال</b><br><span style="color:var(--muted);font-size:12px">فضای نامحدود، تاریخچه دائمی</span></div>` : ""}
+      <button class="ditem" id="soon1">پروفایل</button>
+      <button class="ditem" id="soon2">تنظیمات</button>
+      <button class="ditem danger" id="out">خروج</button>
+    </div>` : ""}
+    ${toast ? `<div class="toast">${esc(toast)}</div>` : ""}`;
+
+    const qi = document.getElementById("q");
+    if (qi) { qi.oninput = e => { q = e.target.value; render(); const n = document.getElementById("q"); if (n) { n.focus(); n.setSelectionRange(q.length, q.length); } }; }
+    document.getElementById("menu")?.addEventListener("click", () => { panel = true; render(); });
+    document.getElementById("ov")?.addEventListener("click", () => { panel = false; render(); });
+    document.getElementById("out")?.addEventListener("click", () => { setSess(null); me = null; panel = false; render(); });
+    document.getElementById("back")?.addEventListener("click", () => { active = null; render(); });
+    document.getElementById("more")?.addEventListener("click", tryLeave);
+    document.getElementById("att")?.addEventListener("click", () => showToast("ارسال فایل به‌زودی"));
+    document.getElementById("soon1")?.addEventListener("click", () => showToast("به‌زودی"));
+    document.getElementById("soon2")?.addEventListener("click", () => showToast("به‌زودی"));
+    document.getElementById("send")?.addEventListener("click", send);
+    document.getElementById("msg")?.addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } });
+    app.querySelectorAll("[data-cid]").forEach(el => el.onclick = () => { active = el.getAttribute("data-cid"); render(); const box = document.getElementById("msgs"); if (box) box.scrollTop = box.scrollHeight; });
+    app.querySelectorAll("[data-uid]").forEach(el => el.onclick = () => openPrivate(el.getAttribute("data-uid")));
+    const box = document.getElementById("msgs"); if (box) box.scrollTop = box.scrollHeight;
+  }
+  boot();
+  </script>
+</body>
+</html>
