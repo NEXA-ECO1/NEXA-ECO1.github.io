@@ -29,10 +29,15 @@ export default async function handler(req, res) {
 
   try {
     await ensureSchema();
+    const db = sql();
 
-    // ---------- POST: ارسال پیام عمومی (بدون نیاز به رمز) ----------
+    // ---------- POST: public message (no password) ----------
     if (req.method === 'POST' && !req.query.action) {
-      const { name, contact, body } = req.body || {};
+      let bodyData = req.body;
+      if (typeof bodyData === 'string') {
+        try { bodyData = JSON.parse(bodyData); } catch { bodyData = {}; }
+      }
+      const { name, contact, body } = bodyData || {};
 
       if (!body || typeof body !== 'string' || body.trim().length < 4) {
         return res.status(400).json({ error: 'متن پیام باید حداقل ۴ کاراکتر باشد' });
@@ -45,7 +50,7 @@ export default async function handler(req, res) {
       const cleanName = (name || 'مهمان').toString().trim().slice(0, 80) || 'مهمان';
       const cleanContact = (contact || '-').toString().trim().slice(0, 120) || '-';
 
-      await sql`
+      await db`
         INSERT INTO messages (id, name, contact, body)
         VALUES (${id}, ${cleanName}, ${cleanContact}, ${body.trim()})
       `;
@@ -57,27 +62,26 @@ export default async function handler(req, res) {
       });
     }
 
-    // ---------- از اینجا به بعد فقط ادمین ----------
+    // ---------- Admin only from here ----------
     if (!isAdmin(req)) {
-      return res.status(401).json({ error: 'دسترسی غیرمجاز' });
+      return res.status(401).json({ error: 'دسترسی غیرمجاز — رمز اشتباه است' });
     }
 
-    // GET: لیست پیام‌ها + ریپلای‌ها
+    // GET list
     if (req.method === 'GET') {
-      const { rows: messages } = await sql`
+      const messages = await db`
         SELECT id, name, contact, body, created_at, is_read
         FROM messages
         ORDER BY created_at DESC
         LIMIT 200
       `;
 
-      const { rows: replies } = await sql`
+      const replies = await db`
         SELECT id, message_id, body, from_name, created_at
         FROM replies
         ORDER BY created_at ASC
       `;
 
-      // attach replies to each message
       const map = {};
       messages.forEach(m => {
         map[m.id] = { ...m, replies: [] };
@@ -93,42 +97,48 @@ export default async function handler(req, res) {
 
     // POST action=reply
     if (req.method === 'POST' && req.query.action === 'reply') {
-      const { messageId, body } = req.body || {};
+      let bodyData = req.body;
+      if (typeof bodyData === 'string') {
+        try { bodyData = JSON.parse(bodyData); } catch { bodyData = {}; }
+      }
+      const { messageId, body } = bodyData || {};
       if (!messageId || !body || body.trim().length < 1) {
         return res.status(400).json({ error: 'messageId و body الزامی است' });
       }
 
       const id = uid('r');
-      await sql`
+      await db`
         INSERT INTO replies (id, message_id, body, from_name)
         VALUES (${id}, ${messageId}, ${body.trim()}, ${'محمد یاسین کرمی'})
       `;
-
-      // mark original as read
-      await sql`
-        UPDATE messages SET is_read = TRUE WHERE id = ${messageId}
-      `;
+      await db`UPDATE messages SET is_read = TRUE WHERE id = ${messageId}`;
 
       return res.status(201).json({ ok: true, id });
     }
 
     // POST action=read
     if (req.method === 'POST' && req.query.action === 'read') {
-      const { messageId } = req.body || {};
+      let bodyData = req.body;
+      if (typeof bodyData === 'string') {
+        try { bodyData = JSON.parse(bodyData); } catch { bodyData = {}; }
+      }
+      const { messageId } = bodyData || {};
       if (!messageId) return res.status(400).json({ error: 'messageId الزامی است' });
 
-      await sql`
-        UPDATE messages SET is_read = TRUE WHERE id = ${messageId}
-      `;
+      await db`UPDATE messages SET is_read = TRUE WHERE id = ${messageId}`;
       return res.status(200).json({ ok: true });
     }
 
     // POST action=delete
     if (req.method === 'POST' && req.query.action === 'delete') {
-      const { messageId } = req.body || {};
+      let bodyData = req.body;
+      if (typeof bodyData === 'string') {
+        try { bodyData = JSON.parse(bodyData); } catch { bodyData = {}; }
+      }
+      const { messageId } = bodyData || {};
       if (!messageId) return res.status(400).json({ error: 'messageId الزامی است' });
 
-      await sql`DELETE FROM messages WHERE id = ${messageId}`;
+      await db`DELETE FROM messages WHERE id = ${messageId}`;
       return res.status(200).json({ ok: true });
     }
 
@@ -137,7 +147,7 @@ export default async function handler(req, res) {
     console.error('API Error:', err);
     return res.status(500).json({
       error: 'خطای سرور',
-      detail: process.env.NODE_ENV === 'development' ? err.message : undefined
+      detail: err.message || String(err)
     });
   }
 }
