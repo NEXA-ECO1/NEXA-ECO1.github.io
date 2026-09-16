@@ -1,0 +1,16 @@
+{
+  "name": "nexa-eco1",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Official 3D bio link of Mohammad Yasin Karami with real SQL inbox",
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "echo 'Static + Serverless ready'"
+  },
+  "dependencies": {
+    "@vercel/postgres": "^0.10.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
